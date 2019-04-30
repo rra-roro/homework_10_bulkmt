@@ -12,6 +12,13 @@ namespace roro_lib
       class command_reader : public publisher_mixin<void(const std::vector<std::string>&, std::time_t)>
       {
         public:
+            struct counters
+            {
+                  std::size_t count_string = 0;
+                  std::size_t count_block = 0;
+                  std::size_t count_all_cmds = 0;
+            };
+
             command_reader(size_t size_bulk) : size_bulk(size_bulk){};
 
             void read()
@@ -22,13 +29,15 @@ namespace roro_lib
 
                   for (std::string line; getline(std::cin, line);) // For exit by EOF. (Console Linux Ctrl+D. Console Windows Ctrl+Z)
                   {
+                        reader_counters.count_string++;
+
                         if (count_cmd_bulk == 0)
                               time_first_cmd = get_time();
 
                         if (line == "{")
                         {
                               notify_subscribers(command_list, time_first_cmd);
-                              brackets_read();
+                              brackets_read(reader_counters.count_all_cmds);
                               count_cmd_bulk = 0;
                               continue;
                         }
@@ -39,6 +48,7 @@ namespace roro_lib
                         }
 
                         command_list.push_back(line);
+                        reader_counters.count_all_cmds++;
 
                         if (count_cmd_bulk == size_bulk - 1)
                         {
@@ -52,7 +62,13 @@ namespace roro_lib
                   notify_subscribers(command_list, time_first_cmd);
             };
 
+            counters get_counters()
+            {
+                  return reader_counters;
+            }
+
         private:
+            counters reader_counters;
 
             size_t size_bulk;
 
@@ -65,12 +81,13 @@ namespace roro_lib
             {
                   if (!command_list.empty())
                   {
+                        reader_counters.count_block++;
                         notify(command_list, time_first_cmd);
                         command_list.clear();
                   }
             }
 
-            void brackets_read()
+            void brackets_read(std::size_t& count_all_cmds)
             {
                   size_t count_bracket = 1;
                   std::time_t time_first_cmd = 0;
@@ -78,12 +95,14 @@ namespace roro_lib
 
                   for (std::string line; count_bracket != 0;)
                   {
-                        if (!getline(std::cin, line))  
-                              exit(EXIT_SUCCESS);        // Program exit  by EOF. (Console Linux Ctrl+D. Console Windows Ctrl+Z)
+                        reader_counters.count_string++;
 
-                        if (time_first_cmd == 0)                        
+                        if (!getline(std::cin, line))
+                              exit(EXIT_SUCCESS); // Program exit  by EOF. (Console Linux Ctrl+D. Console Windows Ctrl+Z)
+
+                        if (time_first_cmd == 0)
                               time_first_cmd = get_time();
-                        
+
 
                         if (line == "{")
                         {
@@ -98,9 +117,16 @@ namespace roro_lib
                         }
 
                         command_list.push_back(line);
+                        count_all_cmds++;
                   }
 
                   notify_subscribers(command_list, time_first_cmd);
             }
       };
+
+      std::ostream& operator<<(std::ostream& out, const command_reader::counters& counters)
+      {
+            out << counters.count_string << " strings; " << counters.count_block << " bloks; " << counters.count_all_cmds << " cmds";
+            return out;
+      }
 }
