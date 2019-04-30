@@ -19,6 +19,7 @@ SET(TARGT_NAME bulkmt)
 SET(ALL_SOURCE main.cpp)
 SET(ALL_INCLUDE "../include/" "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/..")
 SET(ALL_LIBS my_lib)
+SET(Linux_LIBS pthread)
 
 add_executable(${TARGT_NAME} ${ALL_SOURCE})
 target_include_directories(${TARGT_NAME} PUBLIC ${ALL_INCLUDE})
@@ -62,6 +63,7 @@ else()
                   COMPILE_OPTIONS "-Wpedantic;-Wall;-Wextra"
         )
 
+        SET(ALL_LIBS ${ALL_LIBS} ${Linux_LIBS})
 endif ()
 
 

@@ -21,13 +21,16 @@ find_package(GTest REQUIRED)
 
 message(STATUS "GTest include: ${GTEST_INCLUDE_DIR}")
 
+SET(TARGT_NAME test_bulkmt)
 
-add_executable(test_bulkmt test_bulkmt.cpp)
-target_include_directories(test_bulkmt PUBLIC "../include/" "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/.." ${GTEST_INCLUDE_DIR})
+add_executable(${TARGT_NAME}  test_bulkmt.cpp)
+target_include_directories(${TARGT_NAME}  PUBLIC "../include/" "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/.." ${GTEST_INCLUDE_DIR})
+SET(ALL_LIBS GTest::GTest GTest::Main my_lib)
+SET(Linux_LIBS pthread)
 
 if (MSVC)
 
-        set_target_properties(test_bulkmt PROPERTIES
+        set_target_properties(${TARGT_NAME}  PROPERTIES
       CXX_STANDARD 17
       CXX_STANDARD_REQUIRED ON
       COMPILE_OPTIONS "/permissive-;/Zc:wchar_t"
@@ -35,13 +38,15 @@ if (MSVC)
 
 else()
 
-        set_target_properties(test_bulkmt PROPERTIES
+        set_target_properties(${TARGT_NAME}  PROPERTIES
                   CXX_STANDARD 17
                   CXX_STANDARD_REQUIRED ON
                   COMPILE_OPTIONS "-Wpedantic;-Wall;-Wextra"
         )
 
+        SET(ALL_LIBS ${ALL_LIBS} ${Linux_LIBS})
+
 endif ()
 
-target_link_libraries(test_bulkmt GTest::GTest GTest::Main my_lib)
+target_link_libraries(${TARGT_NAME} ${ALL_LIBS})
 
