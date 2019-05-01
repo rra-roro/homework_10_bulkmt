@@ -230,7 +230,8 @@ namespace roro_lib
             subscriber_handle add_subscriber(Ref_&& obj)
             {
                   auto wwww = [&](auto vec, auto t) { return; };
-                  if constexpr (std::is_invocable_v<decltype(wwww), std::vector<std::string>, std::time_t>)
+                  if constexpr (std::is_invocable_v<decltype(wwww), std::vector<std::string>, std::time_t> ||
+                                std::is_nothrow_invocable_v<decltype(wwww), std::vector<std::string>, std::time_t>)
                   {
                         if constexpr (std::is_same_v<T, std::function<R(Args...)>>)
                         {
