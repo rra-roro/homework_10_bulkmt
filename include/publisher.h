@@ -225,34 +225,31 @@ namespace roro_lib
 
             template <typename Ref_,
                       typename T = std::remove_reference_t<Ref_>,
-                      typename std::enable_if_t<std::is_member_function_pointer_v<decltype(&T::operator())>>* Facke = nullptr
+                      typename std::enable_if_t<!std::is_function_v<typename std::remove_pointer_t<T>>>* Facke = nullptr
             >
             subscriber_handle add_subscriber(Ref_&& obj)
             {
-                  if constexpr (std::is_same_v<T, std::function<R(Args...)>>)
+                  if constexpr (std::is_invocable_v<T, Args...>)
                   {
-                        if (obj != nullptr) // function != nullptr
-                              return add_subscriber_internal(std::forward<Ref_>(obj));
+                        if constexpr (std::is_same_v<T, std::function<R(Args...)>>)
+                        {
+                              if (obj != nullptr) // function != nullptr
+                                    return add_subscriber_internal(std::forward<Ref_>(obj));
+                              else
+                                    return {};
+                        }
                         else
-                              return {};
+                        {
+                              return add_subscriber_internal(std::forward<Ref_>(obj));
+                        }
                   }
                   else
                   {
-                        static_assert(test_arg_subscriber_v<decltype(&T::operator())>,
+                        static_assert(false,
                             "the signature of the subscriber functor must match the signature declared by the publisher");
-
-                        return add_subscriber(std::forward<Ref_>(obj), &T::operator());
+                        return {};
                   }
             }
-
-            template <typename T,
-                      typename std::enable_if_t<std::is_bind_expression_v<T>>* Facke = nullptr
-            >
-            subscriber_handle add_subscriber(const T& obj)
-            {
-                  return add_subscriber(std::function<R(Args...)>(obj));
-            }
-
 
             void del_subscriber(const subscriber_handle& handle)
             {
@@ -342,30 +339,37 @@ namespace roro_lib
 
 
             // добавляем указатель на ф-ию
-            template <typename T>
+            template <typename T,
+                      typename std::enable_if_t<std::is_pointer_v<T> &&
+                                                std::is_function_v<typename std::remove_pointer_t<T>>>* Facke = nullptr>
             constexpr subscriber_handle add_subscriber_internal(const T& fn)
             {
                   return subscribers.insert({ { fn }, fn });
             }
 
-            // добавляем function
+
+            // добавляем функторы
             template <typename Ref_,
                       typename T = std::remove_reference_t<Ref_>,
-                      typename std::enable_if_t<std::is_same_v<T, std::function<R(Args...)>>>* Facke = nullptr
-            >
+                      typename std::enable_if_t<std::is_invocable_v<T, Args...> &&
+                                                !std::is_function_v<typename std::remove_pointer_t<T>>>* Facke = nullptr>
             constexpr subscriber_handle add_subscriber_internal(Ref_&& fn)
             {
                   internal::key_subscriber fn_key(fn);
 
                   if constexpr (std::is_rvalue_reference_v<Ref_&&>)
+                  {
                         fn_key.rvalue = true;
+                        return subscribers.insert({ fn_key, fn });
+                  }
                   else
+                  {
                         fn_key.rvalue = false;
-
-                  return subscribers.insert({ fn_key, fn });
+                        return subscribers.insert({ fn_key, std::ref(fn) });
+                  }                        
             }
 
-            // добавляем прочие функторы
+            // добавляем указатель на ф-ию
             template <std::size_t I = 0,
                       typename T,
                       typename F = R (T::*)(Args...),
@@ -421,8 +425,8 @@ namespace roro_lib
 
             template <typename Ret, typename C, typename... A>
             struct test_arg_subscriber<Ret (C::*)(A...)const,
-                std::enable_if_t<std::is_same_v<std::tuple<Ret, A...>,
-                    std::tuple<R, Args...>>>> : std::true_type
+                                       std::enable_if_t<std::is_same_v<std::tuple<Ret, A...>,
+                                                                       std::tuple<R, Args...>>>> : std::true_type
             {
             };
 

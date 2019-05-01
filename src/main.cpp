@@ -79,43 +79,23 @@ int main(int argc, char* argv[])
                   }
             }
 
+            using queue_tread_t = queue<std::vector<std::string>, std::time_t>;
 
             command_reader cmdr(size_bulk);
 
-
-            queue<std::vector<std::string>, std::time_t> file_queue;
-
+            queue_tread_t file_queue;
             thread_mgr file_tmgr(2, file_queue, save_log_file(), &save_log_file::save);
+            cmdr.add_subscriber([&](auto vec, auto t) { file_queue.push(vec, t); });
 
-            auto send_to_file = [&](const std::vector<std::string>& cmd, std::time_t t) {
-                  file_queue.push(cmd, t);
-                  file_tmgr.notify_one();
-            };
-
-            cmdr.add_subscriber(send_to_file);
-
-
-            queue<std::vector<std::string>, std::time_t> console_queue;
-
+            queue_tread_t console_queue;
             thread_mgr console_tmgr(1, console_queue, output_to_console);
-
-            auto send_to_console = [&](const std::vector<std::string>& cmd, std::time_t t) {
-                  console_queue.push(cmd, t);
-                  console_tmgr.notify_one();
-            };
-
-            cmdr.add_subscriber(send_to_console);
-
+            cmdr.add_subscriber([&](auto vec, auto t){ console_queue.push(vec, t); } );
+            
 
             cmdr.read();
 
-            while (!file_queue.empty() || !console_queue.empty())
-            {
-                  std::this_thread::sleep_for(500ms);
-            };
-
-            console_tmgr.finalize_all();
-            file_tmgr.finalize_all();
+            console_tmgr.finalize_threads();
+            file_tmgr.finalize_threads();
 
 
             cout << "\nmain thread - " << cmdr.get_counters() << std::endl;

@@ -10,51 +10,43 @@
 
 namespace roro_lib
 {
+      struct counters_thread_mgr
+      {
+            std::size_t number_thread = 0;
+            std::size_t count_block = 0;
+            std::size_t count_all_cmds = 0;
+      };
+
+      template<typename... Args>
       class thread_mgr
       {
-        public:
-            struct counters
-            {
-                  std::size_t number_thread = 0;
-                  std::size_t count_block = 0;
-                  std::size_t count_all_cmds = 0;
-            };
+            queue<Args...>& queue_thread;
 
+        public:
             template <typename F,
-                      typename std::enable_if_t<std::is_invocable_v<F, std::mutex&, std::condition_variable &,
-                                                                    queue<std::vector<std::string>, std::time_t> &, bool &,
-                                                                    thread_mgr::counters &>>* Facke = nullptr,
-                      typename... Args
+                      typename std::enable_if_t<std::is_invocable_v<F, queue<Args...>&, counters_thread_mgr&>>* Facke = nullptr                      
             >
             thread_mgr(std::size_t count_threads,
                        queue<Args...>& q,
-                       F fn)
+                       F fn) : queue_thread(q)
             {
                   thread_mgr_internal(count_threads, q, fn);
             }
 
             template <typename T, typename MF,
-                      typename std::enable_if_t<std::is_member_function_pointer_v<MF>>* Facke = nullptr,
-                      typename... Args
+                      typename std::enable_if_t<std::is_member_function_pointer_v<MF>>* Facke = nullptr
             >
             thread_mgr(std::size_t count_threads,
                        queue<Args...>& q,
-                       T&& obj, MF mfn)
+                       T&& obj, MF mfn) : queue_thread(q)
             {
                   using namespace std::placeholders;
-                  thread_mgr_internal(count_threads, q, bind(mfn, std::forward<T>(obj), _1, _2, _3, _4, _5));
+                  thread_mgr_internal(count_threads, q, bind(mfn, std::forward<T>(obj), _1, _2));
             }
 
-
-            void notify_one()
+            void finalize_threads()
             {
-                  cv.notify_one();
-            }
-
-            void finalize_all()
-            {
-                  exit = true;
-                  cv.notify_all();
+                  queue_thread.push_exit();
 
                   for (auto& thr : list_threads)
                   {
@@ -65,7 +57,7 @@ namespace roro_lib
 
             ~thread_mgr()
             {
-                  finalize_all();
+                  finalize_threads();
             };
 
             auto get_list_counters()
@@ -74,11 +66,8 @@ namespace roro_lib
             }
 
         private:
-            std::mutex cv_m;
-            std::condition_variable cv;
-            static inline bool exit = false;
             std::list<std::thread> list_threads;
-            std::list<struct counters> list_counters;
+            std::list<counters_thread_mgr> list_counters;
 
             template <typename T, typename... Args>
             void thread_mgr_internal(std::size_t count_threads,
@@ -87,16 +76,16 @@ namespace roro_lib
             {
                   for (size_t i = 0; i < count_threads; i++)
                   {
-                        counters counter_thread;
+                        counters_thread_mgr counter_thread;
                         counter_thread.number_thread = i;
                         list_counters.push_back(counter_thread);
 
-                        list_threads.push_back(std::thread(fn, std::ref(cv_m), std::ref(cv), std::ref(q), std::ref(exit), std::ref(list_counters.back())));
+                        list_threads.push_back(std::thread(fn, std::ref(q), std::ref(list_counters.back())));
                   }
             }
       };
 
-      std::ostream& operator<<(std::ostream& out, const thread_mgr::counters& counters)
+      std::ostream& operator<<(std::ostream& out, const counters_thread_mgr& counters)
       {
             out << counters.count_block << " bloks; " << counters.count_all_cmds << " cmds";
             return out;

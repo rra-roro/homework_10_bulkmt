@@ -9,10 +9,13 @@ namespace roro_lib
       template <typename... Args>
       class queue
       {
-            std::mutex queue_mutex;
-            std::list<std::tuple<Args...>> raw_queue;
-
         public:
+            enum cmd_type
+            {
+                  data,
+                  exit
+            };
+
             bool empty()
             {
                   std::lock_guard<std::mutex> queue_guard(queue_mutex);
@@ -23,23 +26,37 @@ namespace roro_lib
             void push(Args_push... args)
             {
                   std::lock_guard<std::mutex> queue_guard(queue_mutex);
-                  raw_queue.emplace_front(args...);
+                  raw_queue.emplace_front(data, args...);
+                  queue_cv.notify_one();
             }
 
-            std::optional<std::tuple<Args...>> pop()
+            void push_exit()
+            {
+                  std::lock_guard<std::mutex> queue_guard(queue_mutex);
+                  raw_queue.emplace_front(exit, Args()...);
+                  queue_cv.notify_all();
+            }
+
+            std::tuple<cmd_type, Args...> pop()
             {
                   std::unique_lock<std::mutex> queue_uguard(queue_mutex);
+                  queue_cv.wait(queue_uguard, [&] { return !raw_queue.empty(); });
 
-                  if (!raw_queue.empty())
-                  {
-                        std::tuple<Args...> item(raw_queue.back());
+                  std::tuple<cmd_type, Args...> item(raw_queue.back());
+
+                  if (std::get<0>(item) != exit)
                         raw_queue.pop_back();
-                        queue_uguard.unlock();
-                        return item;
-                  }
+
                   queue_uguard.unlock();
-                  return {};
+
+                  return item;
             }
+
+        private:
+            std::mutex queue_mutex;
+            std::condition_variable queue_cv;
+            std::list<std::tuple<cmd_type, Args...>> raw_queue;
+
       };
 
 }

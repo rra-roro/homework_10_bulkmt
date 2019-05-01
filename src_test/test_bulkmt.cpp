@@ -80,8 +80,22 @@ namespace roro_lib
             pbl.add_subscriber(fn1);                 // function == nullptr  - игнорируем
             pbl.add_subscriber(fn2);                 // Уже есть в подписчиках
 
+            // ----
+            auto l1 = []() { int i = 1; i++; };
 
-            ASSERT_TRUE(pbl.subscribers.size() == 8);
+            pbl.add_subscriber(l1);
+            ASSERT_TRUE(pbl.subscribers.size() == 9);
+
+            pbl.add_subscriber(l1);
+            ASSERT_TRUE(pbl.subscribers.size() == 9);     // Уже есть в подписчиках
+
+            pbl.add_subscriber([]() { int i = 1; i++; }); //  rvalue
+            ASSERT_TRUE(pbl.subscribers.size() == 10);
+
+            pbl.add_subscriber([]() { int i = 1; i++; }); //  rvalue - добавляем повторно
+            ASSERT_TRUE(pbl.subscribers.size() == 11);
+
+            ASSERT_TRUE(pbl.subscribers.size() == 11);
       }
 
 
@@ -198,8 +212,8 @@ namespace roro_lib
       struct subscriber_state
       {
             int st = 0;
-            void test() { ++st; };
-            void operator()() { ++st; };
+            void test() { st+=1; };
+            void operator()() { st+=2; };
       };
 
       TEST_F(PublisherMixinTest, StoreSubscribersByRef)
@@ -212,7 +226,7 @@ namespace roro_lib
             pbl.add_subscriber(sscr, &subscriber_state::test);
             pbl.run();
 
-            ASSERT_TRUE(sscr.st == 2);
+            ASSERT_TRUE(sscr.st == 3);
       }
 
       TEST_F(PublisherMixinTest, StoreSubscribersByValue)

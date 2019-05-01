@@ -14,27 +14,24 @@
 
 namespace roro_lib
 {
-      void output_to_console(std::mutex& cv_m,
-                             std::condition_variable& cv,
-                             queue<std::vector<std::string>, std::time_t>& que,
-                             bool& exit,
-                             thread_mgr::counters& counters_thread)
+      void output_to_console(queue<std::vector<std::string>, std::time_t>& que,
+          counters_thread_mgr& counters_thread)
       {
-            while (true)
+            try
             {
-                  std::unique_lock<std::mutex> lock(cv_m);
-                  cv.wait(lock, [&] { return !que.empty() || exit; });
-                  if (exit)
-                        return;
+                  using queue_thread_t = std::remove_reference_t<decltype(que)>;
 
-                  auto item = que.pop();
-
-                  if (item)
+                  while (true)
                   {
+                        auto item = que.pop();
+                        if (std::get<0>(item) == queue_thread_t::exit)
+                              return;
+
                         counters_thread.count_block++;
 
+
                         std::string bulk = "bulk:";
-                        for (auto cmd : std::get<0>(*item))
+                        for (auto cmd : std::get<1>(item))
                         {
                               bulk += " " + cmd + ",";
                               counters_thread.count_all_cmds++;
@@ -44,6 +41,10 @@ namespace roro_lib
 
                         std::cout << bulk;
                   }
+            }
+            catch (...)
+            {
+
             }
       }
 
@@ -58,37 +59,33 @@ namespace roro_lib
                   return sstr.str();
             }
 
-            void save(std::mutex& cv_m,
-                      std::condition_variable& cv,
-                      queue<std::vector<std::string>, std::time_t>& que,
-                      bool& exit,
-                      thread_mgr::counters& counters_thread)
+            void save(queue<std::vector<std::string>, std::time_t>& que,
+                      counters_thread_mgr& counters_thread)
             {
-                  while (true)
+                  try
                   {
-                        std::unique_lock<std::mutex> lock(cv_m);
+                        using queue_thread_t = std::remove_reference_t<decltype(que)>;
 
-                        cv.wait(lock, [&] { return !que.empty() || exit; });                       
-
-                        if (exit)
-                              return;
-
-                        auto item = que.pop();
-                        
-                        lock.unlock();
-
-                        if (item)
+                        while (true)
                         {
+                              auto item = que.pop();
+                              if (std::get<0>(item) == queue_thread_t::exit)
+                                    return;
+
                               counters_thread.count_block++;
 
-                              std::fstream fout(get_filename(std::get<1>(*item), counters_thread.number_thread), std::fstream::out);
-                              for (auto cmd : std::get<0>(*item))
+                              std::fstream fout(get_filename(std::get<2>(item), counters_thread.number_thread), std::fstream::out);
+                              for (auto cmd : std::get<1>(item))
                               {
                                     fout << cmd << "\n";
                                     counters_thread.count_all_cmds++;
                               }
                               fout.close();
                         }
+                  }
+                  catch (...)
+                  {
+
                   }
             }
       };
