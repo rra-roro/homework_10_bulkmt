@@ -62,10 +62,10 @@ namespace roro_lib
             std::list<std::thread> list_threads;
             std::list<counters_thread_mgr> list_counters;
 
-            template <typename T, typename... Args>
+            template <typename T>
             void thread_mgr_internal(std::size_t count_threads,
-                queue<Args...>& q,
-                T fn)
+                                     queue<Args...>& q,
+                                     T fn)
             {
                   for (size_t i = 0; i < count_threads; i++)
                   {
