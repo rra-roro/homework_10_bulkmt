@@ -1,16 +1,13 @@
 ﻿#pragma once
 #include "queue.h"
-#include "thread_mgr.h"
+#include "counters.h"
 #include <string>
 #include <iostream>
 #include <sstream>
 #include <fstream>
 #include <vector>
 #include <ctime>
-
 #include <tuple>
-#include <mutex>
-#include <condition_variable>
 
 namespace roro_lib
 {

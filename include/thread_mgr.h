@@ -1,22 +1,15 @@
 ﻿#pragma once
 #include "queue.h"
+#include "counters.h"
 #include <functional>
 #include <thread>
-#include <mutex>
-#include <condition_variable>
 #include <list>
 #include <iostream>
 #include <ctime>
 
+
 namespace roro_lib
 {
-      struct counters_thread_mgr
-      {
-            std::size_t number_thread = 0;
-            std::size_t count_block = 0;
-            std::size_t count_all_cmds = 0;
-      };
-
       template<typename... Args>
       class thread_mgr
       {

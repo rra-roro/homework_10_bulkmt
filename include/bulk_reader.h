@@ -1,24 +1,18 @@
 ﻿#pragma once
+#include "publisher.h"
+#include "counters.h"
 #include <vector>
 #include <string>
 #include <chrono>
 #include <ctime>
 #include <cstdlib>
 #include <exception>
-#include "publisher.h"
 
 namespace roro_lib
 {
       class command_reader : public publisher_mixin<void(const std::vector<std::string>&, std::time_t)>
       {
         public:
-            struct counters
-            {
-                  std::size_t count_string = 0;
-                  std::size_t count_block = 0;
-                  std::size_t count_all_cmds = 0;
-            };
-
             command_reader(size_t size_bulk) : size_bulk(size_bulk){};
 
             void read()
@@ -62,13 +56,13 @@ namespace roro_lib
                   notify_subscribers(command_list, time_first_cmd);
             };
 
-            counters get_counters()
+            counters_command_reader get_counters()
             {
                   return reader_counters;
             }
 
         private:
-            counters reader_counters;
+            counters_command_reader reader_counters;
 
             size_t size_bulk;
 
@@ -124,7 +118,7 @@ namespace roro_lib
             }
       };
 
-      std::ostream& operator<<(std::ostream& out, const command_reader::counters& counters)
+      std::ostream& operator<<(std::ostream& out, const counters_command_reader& counters)
       {
             out << counters.count_string << " strings; " << counters.count_block << " bloks; " << counters.count_all_cmds << " cmds";
             return out;
