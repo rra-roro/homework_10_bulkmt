@@ -85,11 +85,11 @@ int main(int argc, char* argv[])
 
             queue_tread_t file_queue;
             thread_mgr file_tmgr(2, file_queue, save_log_file(), &save_log_file::save);
-            cmdr.add_subscriber([&](auto vec, auto t) { file_queue.push(vec, t); });
+            cmdr.add_subscriber([&](const auto& vec, auto t) { file_queue.push(vec, t); });
 
             queue_tread_t console_queue;
             thread_mgr console_tmgr(1, console_queue, output_to_console);
-            cmdr.add_subscriber([&](auto vec, auto t){ console_queue.push(vec, t); } );
+            cmdr.add_subscriber([&](const auto& vec, auto t){ console_queue.push(vec, t); } );
             
 
             cmdr.read();
