@@ -229,10 +229,10 @@ namespace roro_lib
             >
             subscriber_handle add_subscriber(Ref_&& obj)
             {
-                  auto wwww = [&](auto vec, auto t) { return; };
-                  if constexpr (std::is_invocable_v<decltype(wwww), std::vector<std::string>, std::time_t> ||
-                                std::is_nothrow_invocable_v<decltype(wwww), std::vector<std::string>, std::time_t>)
+#ifndef __GNUG__
+                  if constexpr (std::is_invocable_v<T, Args...>)
                   {
+#endif
                         if constexpr (std::is_same_v<T, std::function<R(Args...)>>)
                         {
                               if (obj != nullptr) // function != nullptr
@@ -244,6 +244,7 @@ namespace roro_lib
                         {
                               return add_subscriber_internal(std::forward<Ref_>(obj));
                         }
+#ifndef __GNUG__
                   }
                   else
                   {
@@ -251,6 +252,7 @@ namespace roro_lib
                             "the signature of the subscriber functor must match the signature declared by the publisher");
                         return {};
                   }
+#endif
             }
 
             void del_subscriber(const subscriber_handle& handle)
