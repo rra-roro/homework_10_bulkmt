@@ -1,12 +1,10 @@
 ﻿#pragma once
 #include "queue.h"
 #include "counters.h"
+#include "exception_list.h"
 #include <functional>
 #include <thread>
 #include <list>
-#include <iostream>
-#include <ctime>
-
 
 namespace roro_lib
 {
@@ -17,7 +15,9 @@ namespace roro_lib
 
         public:
             template <typename F,
-                      typename std::enable_if_t<std::is_invocable_v<F, queue<Args...>&, counters_thread_mgr&>>* Facke = nullptr                      
+                      typename std::enable_if_t<std::is_invocable_v<F, queue<Args...>&,
+                                                                       counters_thread_mgr&,
+                                                                       std::exception_ptr&>>* Facke = nullptr                      
             >
             thread_mgr(std::size_t count_threads,
                        queue<Args...>& q,
@@ -34,7 +34,7 @@ namespace roro_lib
                        T&& obj, MF mfn) : queue_thread(q)
             {
                   using namespace std::placeholders;
-                  thread_mgr_internal(count_threads, q, bind(mfn, std::forward<T>(obj), _1, _2));
+                  thread_mgr_internal(count_threads, q, bind(mfn, std::forward<T>(obj), _1, _2, _3));
             }
 
             void finalize_threads()
@@ -58,9 +58,15 @@ namespace roro_lib
                   return list_counters;
             }
 
+            auto get_threads_exceptions()
+            {
+                  return list_exception_ptr;
+            }
+
         private:
             std::list<std::thread> list_threads;
             std::list<counters_thread_mgr> list_counters;
+            exception_ptr_list list_exception_ptr;
 
             template <typename T>
             void thread_mgr_internal(std::size_t count_threads,
@@ -69,18 +75,14 @@ namespace roro_lib
             {
                   for (size_t i = 0; i < count_threads; i++)
                   {
-                        counters_thread_mgr counter_thread;
-                        counter_thread.number_thread = i;
-                        list_counters.push_back(counter_thread);
+                        list_counters.emplace_back(i);
+                        list_exception_ptr.add_back_exception_ptr();
 
-                        list_threads.push_back(std::thread(fn, std::ref(q), std::ref(list_counters.back())));
+                        list_threads.push_back(std::thread(fn,
+                                                           std::ref(q),
+                                                           std::ref(list_counters.back()),
+                                                           std::ref(list_exception_ptr.back())));
                   }
             }
       };
-
-      std::ostream& operator<<(std::ostream& out, const counters_thread_mgr& counters)
-      {
-            out << counters.count_block << " bloks; " << counters.count_all_cmds << " cmds";
-            return out;
-      }
 }

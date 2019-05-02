@@ -118,9 +118,4 @@ namespace roro_lib
             }
       };
 
-      std::ostream& operator<<(std::ostream& out, const counters_command_reader& counters)
-      {
-            out << counters.count_string << " strings; " << counters.count_block << " bloks; " << counters.count_all_cmds << " cmds";
-            return out;
-      }
 }
