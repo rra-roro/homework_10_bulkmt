@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "exception_list.h"
 #include <unordered_map>
 #include <list>
 #include <optional>
@@ -281,16 +282,20 @@ namespace roro_lib
                   {
                         try
                         {
-                              return subscriber.second(args...);
-                        }
-                        catch (const std::exception& ex)
-                        {
-                              notify_exception_list.emplace_back(ex.what());
+                              try
+                              {
+                                    return subscriber.second(args...);
+                              }
+                              catch (...)
+                              {
+                                    std::throw_with_nested(std::runtime_error("publisher_mixin::notify(...) failed."));
+                              }
                         }
                         catch (...)
                         {
-                              notify_exception_list.emplace_back("Unknown exception.");
+                              notify_exception_list.add_back_exception_ptr(std::current_exception());
                         }
+
                         if constexpr (!std::is_void_v<R>)
                               return {};
                   };
@@ -329,7 +334,7 @@ namespace roro_lib
                   return {};
             }
 
-            const std::list<std::runtime_error>& get_last_notify_exception()
+            exception_ptr_list& get_last_notify_exception()
             {
                   return notify_exception_list;
             }
@@ -339,7 +344,7 @@ namespace roro_lib
 
         private:
             container_subscribers_t subscribers;
-            std::list<std::runtime_error> notify_exception_list;
+            exception_ptr_list notify_exception_list;
 
 
             // добавляем указатель на ф-ию

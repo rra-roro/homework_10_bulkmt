@@ -25,21 +25,31 @@ namespace roro_lib
             }
 
             template <typename... Args_push>
-            void push(Args_push... args)
+            void push(Args_push... args) try
             {
                   std::lock_guard<std::mutex> queue_guard(queue_mutex);
                   raw_queue.emplace_front(data, args...);
                   queue_cv.notify_one();
             }
+            catch (...)
+            {
+                  std::throw_with_nested(std::runtime_error("queue::push() failed."));
+            }
 
-            void push_exit()
+
+            void push_exit() try
             {
                   std::lock_guard<std::mutex> queue_guard(queue_mutex);
                   raw_queue.emplace_front(exit, Args()...);
                   queue_cv.notify_all();
             }
+            catch (...)
+            {
+                  std::throw_with_nested(std::runtime_error("queue::push_exit() failed."));
+            }
 
-            std::tuple<cmd_type, Args...> pop()
+
+            std::tuple<cmd_type, Args...> pop() try
             {
                   std::unique_lock<std::mutex> queue_uguard(queue_mutex);
                   queue_cv.wait(queue_uguard, [&] { return !raw_queue.empty(); });
@@ -50,15 +60,17 @@ namespace roro_lib
                         raw_queue.pop_back();
 
                   queue_uguard.unlock();
-
                   return item;
+            }
+            catch (...)
+            {
+                  std::throw_with_nested(std::runtime_error("queue::pop() failed."));
             }
 
         private:
             std::mutex queue_mutex;
             std::condition_variable queue_cv;
             std::list<std::tuple<cmd_type, Args...>> raw_queue;
-
       };
 
 }

@@ -97,11 +97,31 @@ int main(int argc, char* argv[])
 
             queue_tread_t console_queue;
             thread_mgr console_tmgr(1, console_queue, output_to_console);
-            cmdr.add_subscriber([&](auto vec, auto t) { console_queue.push(vec, t); });
+            cmdr.add_subscriber([&](auto vec, auto t)
+            {
+                  try
+                  {
+                        console_queue.push(vec, t);
+                  }
+                  catch (...)
+                  {
+                        std::throw_with_nested(std::runtime_error("'console' subscriber failed."));
+                  }
+            });
 
             queue_tread_t file_queue;
             thread_mgr file_tmgr(count_thread, file_queue, save_log_file(), &save_log_file::save);
-            cmdr.add_subscriber([&](auto vec, auto t) { file_queue.push(vec, t); });
+            cmdr.add_subscriber([&](auto vec, auto t)
+            {
+                  try
+                  {
+                        file_queue.push(vec, t);
+                  }
+                  catch (...)
+                  {
+                        std::throw_with_nested(std::runtime_error("'file' subscriber failed."));
+                  }
+            });
 
             cmdr.read();
 
@@ -109,7 +129,7 @@ int main(int argc, char* argv[])
             file_tmgr.finalize_threads();
 
             cout << "\nmain thread - " << cmdr.get_counters() << std::endl;
-            cout << "log thread - "    << console_tmgr.get_list_counters().back() << std::endl;
+            cout << "log thread - " << console_tmgr.get_list_counters().back() << std::endl;
 
             for (auto file_counters : file_tmgr.get_list_counters())
             {
@@ -121,7 +141,6 @@ int main(int argc, char* argv[])
             exception_ptr_list all_threads_exceptions = console_tmgr.get_threads_exceptions() +
                                                         file_tmgr.get_threads_exceptions();
             all_threads_exceptions.rethrow_if_exist();
-            
       }
       catch (exception_ptr_list& ex_list)
       {
@@ -130,7 +149,7 @@ int main(int argc, char* argv[])
       }
       catch (const exception& ex)
       {
-            print_exception(ex);
+            print_nested_exception(ex);
             return EXIT_FAILURE;
       }
       catch (...)

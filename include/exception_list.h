@@ -6,21 +6,7 @@
 
 namespace roro_lib
 {
-      void print_exception(const std::exception& e, int level = 0)
-      {
-            std::cerr << std::string(level, ' ') << "exception: " << e.what() << '\n';
-            try
-            {
-                  rethrow_if_nested(e);
-            }
-            catch (const std::exception& e)
-            {
-                  print_exception(e, level + 1);
-            }
-            catch (...)
-            {
-            }
-      }
+      void print_nested_exception(const std::exception&, int = 0);
 
       class exception_ptr_list
       {
@@ -33,6 +19,11 @@ namespace roro_lib
                   list_exception_ptr.emplace_back();
             }
 
+            void add_back_exception_ptr(const std::exception_ptr& ex_ptr)
+            {
+                  list_exception_ptr.emplace_back(ex_ptr);
+            }
+
             auto& back()
             {
                   return list_exception_ptr.back();
@@ -41,6 +32,16 @@ namespace roro_lib
             auto& back() const
             {
                   return list_exception_ptr.back();
+            }
+
+            void clear()
+            {
+                  list_exception_ptr.clear();
+            }
+
+            std::size_t size()
+            {
+                  return list_exception_ptr.size();
             }
 
             void rethrow_if_exist()
@@ -62,7 +63,7 @@ namespace roro_lib
                   return lhs;
             }           
 
-            static void print(const exception_ptr_list& ex_list)
+            static void print(const exception_ptr_list& ex_list, int level = 0)
             {
                   for (auto& ex_ptr : ex_list.list_exception_ptr)
                   {
@@ -75,10 +76,29 @@ namespace roro_lib
                         }
                         catch (const std::exception& e)
                         {
-                              print_exception(e);
+                              print_nested_exception(e, level);
                         }
                   }
             }
       };
 
+      void print_nested_exception(const std::exception& e, int level)
+      {
+            std::cerr << std::string(level, ' ') << "exception: " << e.what() << '\n';
+            try
+            {
+                  rethrow_if_nested(e);
+            }
+            catch (exception_ptr_list& ex_list)
+            {
+                  exception_ptr_list::print(ex_list, level + 1);
+            }
+            catch (const std::exception& e)
+            {
+                  print_nested_exception(e, level + 1);
+            }
+            catch (...)
+            {
+            }
+      }
 }

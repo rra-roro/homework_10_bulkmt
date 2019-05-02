@@ -17,43 +17,51 @@ namespace roro_lib
 
             void read()
             {
-                  size_t count_cmd_bulk = 0;
-                  std::time_t time_first_cmd = 0;
-                  std::vector<std::string> command_list;
-
-                  for (std::string line; getline(std::cin, line);) // For exit by EOF. (Console Linux Ctrl+D. Console Windows Ctrl+Z)
+                  try
                   {
-                        reader_counters.count_string++;
+                        size_t count_cmd_bulk = 0;
+                        std::time_t time_first_cmd = 0;
+                        std::vector<std::string> command_list;
 
-                        if (count_cmd_bulk == 0)
-                              time_first_cmd = get_time();
-
-                        if (line == "{")
+                        for (std::string line; getline(std::cin, line);) // For exit by EOF. (Console Linux Ctrl+D. Console Windows Ctrl+Z)
                         {
-                              notify_subscribers(command_list, time_first_cmd);
-                              brackets_read(reader_counters.count_all_cmds);
-                              count_cmd_bulk = 0;
-                              continue;
+                              reader_counters.count_string++;
+
+                              if (count_cmd_bulk == 0)
+                                    time_first_cmd = get_time();
+
+                              if (line == "{")
+                              {
+                                    notify_subscribers(command_list, time_first_cmd);
+                                    brackets_read(reader_counters.count_all_cmds);
+                                    count_cmd_bulk = 0;
+                                    continue;
+                              }
+
+                              if (line == "}")
+                              {
+                                    throw std::runtime_error("found not a pair bracket");
+                              }
+
+                              command_list.push_back(line);
+                              reader_counters.count_all_cmds++;
+
+                              if (count_cmd_bulk == size_bulk - 1)
+                              {
+                                    notify_subscribers(command_list, time_first_cmd);
+                                    count_cmd_bulk = 0;
+                                    continue;
+                              }
+                              count_cmd_bulk++;
                         }
 
-                        if (line == "}")
-                        {
-                              throw std::runtime_error("found not a pair bracket");
-                        }
-
-                        command_list.push_back(line);
-                        reader_counters.count_all_cmds++;
-
-                        if (count_cmd_bulk == size_bulk - 1)
-                        {
-                              notify_subscribers(command_list, time_first_cmd);
-                              count_cmd_bulk = 0;
-                              continue;
-                        }
-                        count_cmd_bulk++;
+                        notify_subscribers(command_list, time_first_cmd);
+                  }
+                  catch (...)
+                  {
+                        std::throw_with_nested(std::runtime_error("command_reader::read() failed."));
                   }
 
-                  notify_subscribers(command_list, time_first_cmd);
             };
 
             counters_command_reader get_counters()
@@ -73,11 +81,20 @@ namespace roro_lib
 
             void notify_subscribers(std::vector<std::string>& command_list, std::time_t time_first_cmd)
             {
-                  if (!command_list.empty())
+                  try
                   {
-                        reader_counters.count_block++;
-                        notify(command_list, time_first_cmd);
-                        command_list.clear();
+                        if (!command_list.empty())
+                        {
+                              reader_counters.count_block++;
+                              notify(command_list, time_first_cmd);
+                              command_list.clear();
+                        }
+
+                        get_last_notify_exception().rethrow_if_exist();
+                  }
+                  catch (...)
+                  {
+                        std::throw_with_nested(std::runtime_error("command_reader::notify_subscribers() failed."));
                   }
             }
 
