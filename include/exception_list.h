@@ -45,7 +45,7 @@ namespace roro_lib
 
             void rethrow_if_exist()
             {
-                  list_exception_ptr.remove(false);
+                  list_exception_ptr.remove(nullptr);
                   if (!list_exception_ptr.empty()) throw *this;
             }
 
