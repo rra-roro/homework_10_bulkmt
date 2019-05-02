@@ -18,9 +18,9 @@ using namespace roro_lib;
 void help()
 {
       cout << R"(
- This demo is my bulk.
+ This demo is my bulkmt.
 
-    bulk  [-version | -? | -N <size>]
+    bulkmt  [-version | -? | -N <size> -T <count>]
        Options:  
        -version      -get version of program
        -?            -about program (this info)
@@ -32,7 +32,7 @@ void help()
 
 void version_bulk()
 {
-      cout << "Version bulk: " << version() << endl;
+      cout << "Version bulkmt: " << version() << endl;
 }
 
 #ifndef _TEST
