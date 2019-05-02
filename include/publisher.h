@@ -282,14 +282,7 @@ namespace roro_lib
                   {
                         try
                         {
-                              try
-                              {
-                                    return subscriber.second(args...);
-                              }
-                              catch (...)
-                              {
-                                    std::throw_with_nested(std::runtime_error("publisher_mixin::notify(...) failed."));
-                              }
+                              return subscriber.second(args...);
                         }
                         catch (...)
                         {
