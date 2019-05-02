@@ -25,7 +25,7 @@ namespace roro_lib
             }
 
             template <typename... Args_push>
-            void push(Args_push... args) try
+            void push(Args_push&&... args) try
             {
                   std::lock_guard<std::mutex> queue_guard(queue_mutex);
                   raw_queue.emplace_front(data, args...);

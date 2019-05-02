@@ -97,7 +97,7 @@ int main(int argc, char* argv[])
 
             queue_tread_t console_queue;
             thread_mgr console_tmgr(1, console_queue, output_to_console);
-            cmdr.add_subscriber([&](auto vec, auto t)
+            cmdr.add_subscriber([&](const auto& vec, auto t)
             {
                   try
                   {
@@ -111,7 +111,7 @@ int main(int argc, char* argv[])
 
             queue_tread_t file_queue;
             thread_mgr file_tmgr(count_thread, file_queue, save_log_file(), &save_log_file::save);
-            cmdr.add_subscriber([&](auto vec, auto t)
+            cmdr.add_subscriber([&](const auto& vec, auto t)
             {
                   try
                   {
@@ -128,6 +128,8 @@ int main(int argc, char* argv[])
             console_tmgr.finalize_threads();
             file_tmgr.finalize_threads();
 
+            // выводим счетчики на консоль
+
             cout << "\nmain thread - " << cmdr.get_counters() << std::endl;
             cout << "log thread - " << console_tmgr.get_list_counters().back() << std::endl;
 
@@ -138,11 +140,13 @@ int main(int argc, char* argv[])
 
             cout << std::endl;
 
+            // повторно бросаем исключения потоков
+
             exception_ptr_list all_threads_exceptions = console_tmgr.get_threads_exceptions() +
                                                         file_tmgr.get_threads_exceptions();
             all_threads_exceptions.rethrow_if_exist();
       }
-      catch (exception_ptr_list& ex_list)
+      catch (const exception_ptr_list& ex_list)
       {
             exception_ptr_list::print(ex_list);
             return EXIT_FAILURE;
