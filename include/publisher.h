@@ -218,7 +218,8 @@ namespace roro_lib
             >
             subscriber_handle add_subscriber(T&& obj, MF mfn)
             {
-                  static_assert(test_arg_subscriber_v<MF>,
+                //  static_assert(test_arg_subscriber_v<MF>,
+                  static_assert(std::is_invocable_v<MF, T, Args...>,
                       "the signature of the subscriber member function must match the signature declared by the publisher");
 
                   return add_subscriber_internal(std::forward<T>(obj), mfn);

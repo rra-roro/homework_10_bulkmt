@@ -108,6 +108,8 @@ int main(int argc, char* argv[])
                         std::throw_with_nested(std::runtime_error("'console' subscriber failed."));
                   }
             });
+                        
+            cmdr.add_subscriber(console_queue, &queue_tread_t::push);
 
             queue_tread_t file_queue;
             thread_mgr file_tmgr(count_thread, file_queue, save_log_file(), &save_log_file::save);
