@@ -97,7 +97,7 @@ int main(int argc, char* argv[])
 
             queue_tread_t console_queue;
             thread_mgr console_tmgr(1, console_queue, output_to_console);
-            cmdr.add_subscriber([&](auto vec, auto t)
+            cmdr.add_subscriber([&](const auto& vec, auto t)
             {
                   try
                   {
