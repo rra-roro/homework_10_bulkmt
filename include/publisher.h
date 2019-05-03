@@ -231,10 +231,9 @@ namespace roro_lib
             >
             subscriber_handle add_subscriber(Ref_&& obj)
             {
-//#ifndef __GNUG__
                   static_assert(std::is_invocable_v<T, Args...>,
                       "the signature of the subscriber functor must match the signature declared by the publisher");
-//#endif
+
                   if constexpr (std::is_same_v<T, std::function<R(Args...)>>)
                   {
                         if (obj != nullptr) // function != nullptr
@@ -397,35 +396,6 @@ namespace roro_lib
                   }
             }
 
-            // проверка соответствия сигнатуры подписчиков
-            template <typename, typename Facke = void>
-            struct test_arg_subscriber : std::false_type
-            {
-            };
-
-            template <typename Ret, typename... A>
-            struct test_arg_subscriber<Ret (*)(A...),
-                std::enable_if_t<std::is_same_v<std::tuple<Ret, A...>,
-                    std::tuple<R, Args...>>>> : std::true_type
-            {
-            };
-
-            template <typename Ret, typename C, typename... A>
-            struct test_arg_subscriber<Ret (C::*)(A...),
-                std::enable_if_t<std::is_same_v<std::tuple<Ret, A...>,
-                    std::tuple<R, Args...>>>> : std::true_type
-            {
-            };
-
-            template <typename Ret, typename C, typename... A>
-            struct test_arg_subscriber<Ret (C::*)(A...)const,
-                                       std::enable_if_t<std::is_same_v<std::tuple<Ret, A...>,
-                                                                       std::tuple<R, Args...>>>> : std::true_type
-            {
-            };
-
-            template <class _Ty>
-            static constexpr bool test_arg_subscriber_v = test_arg_subscriber<_Ty>::value;
 
 #ifdef PRIVATE_TEST
             FRIEND_TEST(PublisherMixinTest, UniqueAddSubscribers1);
