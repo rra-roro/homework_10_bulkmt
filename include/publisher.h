@@ -207,7 +207,8 @@ namespace roro_lib
             >
             subscriber_handle add_subscriber(F fn)
             {
-                  static_assert(test_arg_subscriber_v<F>,
+                  //static_assert(test_arg_subscriber_v<F>,
+                  static_assert(std::is_invocable_v<F, Args...>,
                       "the signature of the subscriber function must match the signature declared by the publisher");
 
                   return add_subscriber_internal(fn);
@@ -218,7 +219,6 @@ namespace roro_lib
             >
             subscriber_handle add_subscriber(T&& obj, MF mfn)
             {
-                //  static_assert(test_arg_subscriber_v<MF>,
                   static_assert(std::is_invocable_v<MF, T, Args...>,
                       "the signature of the subscriber member function must match the signature declared by the publisher");
 
@@ -231,30 +231,21 @@ namespace roro_lib
             >
             subscriber_handle add_subscriber(Ref_&& obj)
             {
-#ifndef __GNUG__
-                  if constexpr (std::is_invocable_v<T, Args...>)
+//#ifndef __GNUG__
+                  static_assert(std::is_invocable_v<T, Args...>,
+                      "the signature of the subscriber functor must match the signature declared by the publisher");
+//#endif
+                  if constexpr (std::is_same_v<T, std::function<R(Args...)>>)
                   {
-#endif
-                        if constexpr (std::is_same_v<T, std::function<R(Args...)>>)
-                        {
-                              if (obj != nullptr) // function != nullptr
-                                    return add_subscriber_internal(std::forward<Ref_>(obj));
-                              else
-                                    return {};
-                        }
-                        else
-                        {
+                        if (obj != nullptr) // function != nullptr
                               return add_subscriber_internal(std::forward<Ref_>(obj));
-                        }
-#ifndef __GNUG__
+                        else
+                              return {};
                   }
                   else
                   {
-                        static_assert(false,
-                            "the signature of the subscriber functor must match the signature declared by the publisher");
-                        return {};
+                        return add_subscriber_internal(std::forward<Ref_>(obj));
                   }
-#endif
             }
 
             void del_subscriber(const subscriber_handle& handle)
