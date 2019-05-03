@@ -207,7 +207,6 @@ namespace roro_lib
             >
             subscriber_handle add_subscriber(F fn)
             {
-                  //static_assert(test_arg_subscriber_v<F>,
                   static_assert(std::is_invocable_v<F, Args...>,
                       "the signature of the subscriber function must match the signature declared by the publisher");
 
@@ -362,7 +361,7 @@ namespace roro_lib
                   }                        
             }
 
-            // добавляем указатель на ф-ию
+            // добавляем указатель на ф-ию член класса
             template <std::size_t I = 0,
                       typename T,
                       typename F = R (T::*)(Args...),
