@@ -317,7 +317,7 @@ namespace roro_lib
                   return {};
             }
 
-            exception_ptr_list& get_last_notify_exception()
+            exception_ptr_list& get_last_notify_exception() noexcept
             {
                   return notify_exception_list;
             }
@@ -388,10 +388,10 @@ namespace roro_lib
 
                         if constexpr (std::is_rvalue_reference_v<T&&>)
                               return subscribers.insert({ { std::forward<T>(obj), fn },
-                                  std::bind(fn, obj, std::get<PhNumber>(placeholders_tuple)...) });
+                                                          std::bind(fn, obj, std::get<PhNumber>(placeholders_tuple)...) });
                         else
                               return subscribers.insert({ { std::forward<T>(obj), fn },
-                                  std::bind(fn, std::ref(obj), std::get<PhNumber>(placeholders_tuple)...) });
+                                                          std::bind(fn, std::ref(obj), std::get<PhNumber>(placeholders_tuple)...) });
                   }
             }
 

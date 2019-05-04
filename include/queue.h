@@ -24,7 +24,7 @@ namespace roro_lib
                   return raw_queue.empty();
             }
 
-            void push(const Args&... args) try
+            void push_wait(const Args&... args) try
             {
                   std::lock_guard<std::mutex> queue_guard(queue_mutex);
                   raw_queue.emplace_front(data, args...);
@@ -36,7 +36,7 @@ namespace roro_lib
             }
 
 
-            void push_exit() try
+            void push_wait_exit() try
             {
                   std::lock_guard<std::mutex> queue_guard(queue_mutex);
                   raw_queue.emplace_front(exit, Args()...);
@@ -48,7 +48,7 @@ namespace roro_lib
             }
 
 
-            std::tuple<cmd_type, Args...> pop() try
+            std::tuple<cmd_type, Args...> pop_wait() try
             {
                   std::unique_lock<std::mutex> queue_uguard(queue_mutex);
                   queue_cv.wait(queue_uguard, [&] { return !raw_queue.empty(); });

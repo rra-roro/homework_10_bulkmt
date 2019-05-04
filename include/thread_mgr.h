@@ -15,21 +15,23 @@ namespace roro_lib
 
         public:
             template <typename F,
-                typename std::enable_if_t<std::is_invocable_v<F, queue<Args...>&,
-                    counters_thread_mgr&,
-                    std::exception_ptr&>>* Facke = nullptr>
+                      typename std::enable_if_t<std::is_invocable_v<F, queue<Args...>&,
+                                                                       counters_thread_mgr&,
+                                                                       std::exception_ptr&>>* Facke = nullptr
+            >
             thread_mgr(std::size_t count_threads,
-                queue<Args...>& q,
-                F fn) : queue_thread(q)
+                       queue<Args...>& q,
+                       F fn) : queue_thread(q)
             {
                   thread_mgr_internal(count_threads, q, fn);
             }
 
             template <typename T, typename MF,
-                typename std::enable_if_t<std::is_member_function_pointer_v<MF>>* Facke = nullptr>
+                      typename std::enable_if_t<std::is_member_function_pointer_v<MF>>* Facke = nullptr
+            >
             thread_mgr(std::size_t count_threads,
-                queue<Args...>& q,
-                T&& obj, MF mfn) : queue_thread(q)
+                       queue<Args...>& q,
+                       T&& obj, MF mfn) : queue_thread(q)
             {
                   using namespace std::placeholders;
                   thread_mgr_internal(count_threads, q, bind(mfn, std::forward<T>(obj), _1, _2, _3));
@@ -37,7 +39,7 @@ namespace roro_lib
 
             void finalize_threads()
             {
-                  queue_thread.push_exit();
+                  queue_thread.push_wait_exit();
 
                   for (auto& thr : list_threads)
                   {
@@ -46,7 +48,7 @@ namespace roro_lib
                   }
             }
 
-            ~thread_mgr() noexcept
+            ~thread_mgr()
             {
                   try
                   {
@@ -59,16 +61,15 @@ namespace roro_lib
                               if (thr.joinable())
                                     thr.detach();
                         }
-                  };
+                  }
             }
 
-
-            auto get_list_counters()
+            auto get_list_counters() const
             {
                   return list_counters;
             }
 
-            auto get_threads_exceptions()
+            auto get_threads_exceptions() const
             {
                   return list_exception_ptr;
             }
@@ -80,8 +81,8 @@ namespace roro_lib
 
             template <typename T>
             void thread_mgr_internal(std::size_t count_threads,
-                queue<Args...>& q,
-                T fn)
+                                     queue<Args...>& q,
+                                     T fn)
             {
                   for (size_t i = 0; i < count_threads; i++)
                   {
@@ -89,9 +90,9 @@ namespace roro_lib
                         list_exception_ptr.add_back_exception_ptr();
 
                         list_threads.push_back(std::thread(fn,
-                            std::ref(q),
-                            std::ref(list_counters.back()),
-                            std::ref(list_exception_ptr.back())));
+                                                           std::ref(q),
+                                                           std::ref(list_counters.back()),
+                                                           std::ref(list_exception_ptr.back())));
                   }
             }
       };

@@ -34,12 +34,12 @@ namespace roro_lib
                   return list_exception_ptr.back();
             }
 
-            void clear()
+            void clear() noexcept
             {
                   list_exception_ptr.clear();
             }
 
-            std::size_t size()
+            std::size_t size() const noexcept
             {
                   return list_exception_ptr.size();
             }
@@ -89,13 +89,13 @@ namespace roro_lib
             {
                   rethrow_if_nested(e);
             }
-            catch (exception_ptr_list& ex_list)
+            catch (const exception_ptr_list& ex_list)
             {
                   exception_ptr_list::print(ex_list, level + 1);
             }
-            catch (const std::exception& e)
+            catch (const std::exception& ex)
             {
-                  print_nested_exception(e, level + 1);
+                  print_nested_exception(ex, level + 1);
             }
             catch (...)
             {

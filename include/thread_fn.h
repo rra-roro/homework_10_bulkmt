@@ -24,7 +24,7 @@ namespace roro_lib
 
                         while (true)
                         {
-                              auto item = que.pop();
+                              auto item = que.pop_wait();
                               if (std::get<0>(item) == queue_thread_t::exit)
                                     return;
 
@@ -88,7 +88,7 @@ namespace roro_lib
 
                               while (true)
                               {
-                                    auto item = que.pop();
+                                    auto item = que.pop_wait();
                                     if (std::get<0>(item) == queue_thread_t::exit)
                                           return;
 

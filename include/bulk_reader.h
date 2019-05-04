@@ -64,7 +64,7 @@ namespace roro_lib
 
             };
 
-            counters_command_reader get_counters()
+            counters_command_reader get_counters() const noexcept
             {
                   return reader_counters;
             }
@@ -74,7 +74,7 @@ namespace roro_lib
 
             size_t size_bulk;
 
-            std::time_t get_time()
+            std::time_t get_time() const noexcept
             {
                   return std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
             }

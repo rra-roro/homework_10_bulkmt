@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
             {
                   try
                   {
-                        console_queue.push(vec, t);
+                        console_queue.push_wait(vec, t);
                   }
                   catch (...)
                   {
@@ -116,7 +116,7 @@ int main(int argc, char* argv[])
             {
                   try
                   {
-                        file_queue.push(vec, t);
+                        file_queue.push_wait(vec, t);
                   }
                   catch (...)
                   {
