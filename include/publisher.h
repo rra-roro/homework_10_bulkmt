@@ -182,9 +182,9 @@ namespace roro_lib
             /*!   \brief  внутренний вспомогательнй класс, представляет собой дискрептор подписчика добавленного в список
 
                           Это "чистая выдумка", который однозначно идентифицирует ф-ию подписчика в unordered_map
-                          В первую очередь, возвращается ф-ией добавления подписчика add_subscriber(), чтобы в последствии
+                          В первую очередь, возвращается ф-ией добавления подписчика subscribe(), чтобы в последствии
                           при необходимости на основе этого дискрептора можно было бы отписаться от уведомления, передав
-                          это дискрептор в ф-ию del_subscriber
+                          это дискрептор в ф-ию unsubscribe
             */
             class subscriber_handle
             {
@@ -205,30 +205,30 @@ namespace roro_lib
                       typename std::enable_if_t<std::is_pointer_v<F> &&
                                                 std::is_function_v<typename std::remove_pointer_t<F>>>* Facke = nullptr
             >
-            subscriber_handle add_subscriber(F fn)
+            subscriber_handle subscribe(F fn)
             {
                   static_assert(std::is_invocable_v<F, Args...>,
                       "the signature of the subscriber function must match the signature declared by the publisher");
 
-                  return add_subscriber_internal(fn);
+                  return subscribe_internal(fn);
             }
 
             template <typename T, typename MF,
                       typename std::enable_if_t<std::is_member_function_pointer_v<MF>>* Facke = nullptr
             >
-            subscriber_handle add_subscriber(T&& obj, MF mfn)
+            subscriber_handle subscribe(T&& obj, MF mfn)
             {
                   static_assert(std::is_invocable_v<MF, T, Args...>,
                       "the signature of the subscriber member function must match the signature declared by the publisher");
 
-                  return add_subscriber_internal(std::forward<T>(obj), mfn);
+                  return subscribe_internal(std::forward<T>(obj), mfn);
             }
 
             template <typename Ref_,
                       typename T = std::remove_reference_t<Ref_>,
                       typename std::enable_if_t<!std::is_function_v<typename std::remove_pointer_t<T>>>* Facke = nullptr
             >
-            subscriber_handle add_subscriber(Ref_&& obj)
+            subscriber_handle subscribe(Ref_&& obj)
             {
                   static_assert(std::is_invocable_v<T, Args...>,
                       "the signature of the subscriber functor must match the signature declared by the publisher");
@@ -236,17 +236,17 @@ namespace roro_lib
                   if constexpr (std::is_same_v<T, std::function<R(Args...)>>)
                   {
                         if (obj != nullptr) // function != nullptr
-                              return add_subscriber_internal(std::forward<Ref_>(obj));
+                              return subscribe_internal(std::forward<Ref_>(obj));
                         else
                               return {};
                   }
                   else
                   {
-                        return add_subscriber_internal(std::forward<Ref_>(obj));
+                        return subscribe_internal(std::forward<Ref_>(obj));
                   }
             }
 
-            void del_subscriber(const subscriber_handle& handle)
+            void unsubscribe(const subscriber_handle& handle)
             {
                   for (auto it = subscribers.begin(); it != subscribers.end(); ++it)
                   {
@@ -334,7 +334,7 @@ namespace roro_lib
             template <typename T,
                       typename std::enable_if_t<std::is_pointer_v<T> &&
                                                 std::is_function_v<typename std::remove_pointer_t<T>>>* Facke = nullptr>
-            constexpr subscriber_handle add_subscriber_internal(const T& fn)
+            constexpr subscriber_handle subscribe_internal(const T& fn)
             {
                   return subscribers.insert({ { fn }, fn });
             }
@@ -345,7 +345,7 @@ namespace roro_lib
                       typename T = std::remove_reference_t<Ref_>,
                       typename std::enable_if_t<std::is_invocable_v<T, Args...> &&
                                                 !std::is_function_v<typename std::remove_pointer_t<T>>>* Facke = nullptr>
-            constexpr subscriber_handle add_subscriber_internal(Ref_&& fn)
+            constexpr subscriber_handle subscribe_internal(Ref_&& fn)
             {
                   internal::key_subscriber fn_key(fn);
 
@@ -367,11 +367,11 @@ namespace roro_lib
                       typename F = R (T::*)(Args...),
                       std::size_t... PhNumber
             >
-            constexpr subscriber_handle add_subscriber_internal(T&& obj, F fn)
+            constexpr subscriber_handle subscribe_internal(T&& obj, F fn)
             {
                   if constexpr (I < sizeof...(Args))
                   {
-                        return add_subscriber_internal<I + 1, T, F, PhNumber..., I>(obj, fn);
+                        return subscribe_internal<I + 1, T, F, PhNumber..., I>(obj, fn);
                   }
                   else if constexpr (sizeof...(Args) == 0)
                   {

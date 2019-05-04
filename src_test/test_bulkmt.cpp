@@ -42,57 +42,57 @@ namespace roro_lib
       {
             publisher pbl;
 
-            pbl.add_subscriber(subscriber_fn); 
+            pbl.subscribe(subscriber_fn); 
             ASSERT_TRUE(pbl.subscribers.size() == 1);
 
-            pbl.add_subscriber(subscriber_functor());                    // rvalue - добавляем
+            pbl.subscribe(subscriber_functor());                    // rvalue - добавляем
             ASSERT_TRUE(pbl.subscribers.size() == 2);
 
             subscriber_functor sf;
 
-            pbl.add_subscriber(sf); 
+            pbl.subscribe(sf); 
             ASSERT_TRUE(pbl.subscribers.size() == 3);
 
-            pbl.add_subscriber(sf, &subscriber_functor::test); 
+            pbl.subscribe(sf, &subscriber_functor::test); 
             ASSERT_TRUE(pbl.subscribers.size() == 4);
 
             std::function<void(void)> fn1 = subscriber_fn;
-            pbl.add_subscriber(fn1);
+            pbl.subscribe(fn1);
             ASSERT_TRUE(pbl.subscribers.size() == 5); 
 
-            pbl.add_subscriber(std::function<void(void)>(subscriber_fn));  //  rvalue - добавляем
+            pbl.subscribe(std::function<void(void)>(subscriber_fn));  //  rvalue - добавляем
             ASSERT_TRUE(pbl.subscribers.size() == 6);
 
 
             // ----
-            pbl.add_subscriber(subscriber_functor());                      //  rvalue - добавляем повторно
+            pbl.subscribe(subscriber_functor());                      //  rvalue - добавляем повторно
             ASSERT_TRUE(pbl.subscribers.size() == 7);
 
-            pbl.add_subscriber(std::function<void(void)>(subscriber_fn)); //   rvalue - добавляем повторно
+            pbl.subscribe(std::function<void(void)>(subscriber_fn)); //   rvalue - добавляем повторно
             ASSERT_TRUE(pbl.subscribers.size() == 8);
 
             // ----
-            pbl.add_subscriber(subscriber_fn);                            // Уже есть в подписчиках
-            pbl.add_subscriber(sf);                                       // Уже есть в подписчиках
-            pbl.add_subscriber(sf, &subscriber_functor::test);            // Уже есть в подписчиках
+            pbl.subscribe(subscriber_fn);                            // Уже есть в подписчиках
+            pbl.subscribe(sf);                                       // Уже есть в подписчиках
+            pbl.subscribe(sf, &subscriber_functor::test);            // Уже есть в подписчиках
 
             std::function<void(void)> fn2;
-            pbl.add_subscriber(fn1);                 // function == nullptr  - игнорируем
-            pbl.add_subscriber(fn2);                 // Уже есть в подписчиках
+            pbl.subscribe(fn1);                 // function == nullptr  - игнорируем
+            pbl.subscribe(fn2);                 // Уже есть в подписчиках
 
             // ----
             auto l1 = []() { int i = 1; i++; };
 
-            pbl.add_subscriber(l1);
+            pbl.subscribe(l1);
             ASSERT_TRUE(pbl.subscribers.size() == 9);
 
-            pbl.add_subscriber(l1);
+            pbl.subscribe(l1);
             ASSERT_TRUE(pbl.subscribers.size() == 9);     // Уже есть в подписчиках
 
-            pbl.add_subscriber([]() { int i = 1; i++; }); //  rvalue
+            pbl.subscribe([]() { int i = 1; i++; }); //  rvalue
             ASSERT_TRUE(pbl.subscribers.size() == 10);
 
-            pbl.add_subscriber([]() { int i = 1; i++; }); //  rvalue - добавляем повторно
+            pbl.subscribe([]() { int i = 1; i++; }); //  rvalue - добавляем повторно
             ASSERT_TRUE(pbl.subscribers.size() == 11);
 
             ASSERT_TRUE(pbl.subscribers.size() == 11);
@@ -135,30 +135,30 @@ namespace roro_lib
             subscriber_d sd;
             subscriber_md md;
 
-            pbl.add_subscriber(sd, &subscriber_d::test0);
+            pbl.subscribe(sd, &subscriber_d::test0);
             ASSERT_TRUE(pbl.subscribers.size() == 1);
-            pbl.add_subscriber(sd, &subscriber_d::test1);
+            pbl.subscribe(sd, &subscriber_d::test1);
             ASSERT_TRUE(pbl.subscribers.size() == 2);
-            pbl.add_subscriber(sd, &subscriber_d::test2);
+            pbl.subscribe(sd, &subscriber_d::test2);
             ASSERT_TRUE(pbl.subscribers.size() == 3);
 
-            pbl.add_subscriber(sd, &subscriber_d::subscriber_base1::test0);
+            pbl.subscribe(sd, &subscriber_d::subscriber_base1::test0);
             ASSERT_TRUE(pbl.subscribers.size() == 4);
-            pbl.add_subscriber(sd, &subscriber_d::subscriber_base1::test2);
+            pbl.subscribe(sd, &subscriber_d::subscriber_base1::test2);
             ASSERT_TRUE(pbl.subscribers.size() == 5);
 
-            pbl.add_subscriber(sd, &subscriber_d::test0);                   // Уже есть в подписчиках
-            pbl.add_subscriber(sd, &subscriber_d::subscriber_base1::test2); // Уже есть в подписчиках
+            pbl.subscribe(sd, &subscriber_d::test0);                   // Уже есть в подписчиках
+            pbl.subscribe(sd, &subscriber_d::subscriber_base1::test2); // Уже есть в подписчиках
 
             ASSERT_TRUE(pbl.subscribers.size() == 5);
 
-            // pbl.add_subscriber(md, &subscriber_md::test0);                // Подписчик напрямую не может быть типом с
+            // pbl.subscribe(md, &subscriber_md::test0);                // Подписчик напрямую не может быть типом с
             //                                                                  Множественным и/или виртуальным наследованием
 
-            pbl.add_subscriber(std::bind(&subscriber_md::test0, md)); // Но через bind может
+            pbl.subscribe(std::bind(&subscriber_md::test0, md)); // Но через bind может
             ASSERT_TRUE(pbl.subscribers.size() == 6);
 
-            pbl.add_subscriber(std::bind(&subscriber_md::test0, md)); // через bind подписываем многократно
+            pbl.subscribe(std::bind(&subscriber_md::test0, md)); // через bind подписываем многократно
             ASSERT_TRUE(pbl.subscribers.size() == 7);
       }
 
@@ -192,20 +192,20 @@ namespace roro_lib
             //i_subscriber& is = sd2;
             subscriber_base& sb = sd2;
 
-            pbl.add_subscriber(sd1, &subscriber_d2::test0);
+            pbl.subscribe(sd1, &subscriber_d2::test0);
             ASSERT_TRUE(pbl.subscribers.size() == 1);
-            pbl.add_subscriber(sd1, &subscriber_d2::test1);
+            pbl.subscribe(sd1, &subscriber_d2::test1);
             ASSERT_TRUE(pbl.subscribers.size() == 2);
-            pbl.add_subscriber(sd1, &subscriber_d2::test2);
+            pbl.subscribe(sd1, &subscriber_d2::test2);
             ASSERT_TRUE(pbl.subscribers.size() == 3);
 
-            //pbl.add_subscriber(is, &i_subscriber::test0);   // is  - нельзя инстанцировать
-            //pbl.add_subscriber(is, &i_subscriber::test1);
-            pbl.add_subscriber(sb, &subscriber_d2::test0);
+            //pbl.subscribe(is, &i_subscriber::test0);   // is  - нельзя инстанцировать
+            //pbl.subscribe(is, &i_subscriber::test1);
+            pbl.subscribe(sb, &subscriber_d2::test0);
             ASSERT_TRUE(pbl.subscribers.size() == 4);
-            pbl.add_subscriber(sb, &subscriber_d2::test1);
+            pbl.subscribe(sb, &subscriber_d2::test1);
             ASSERT_TRUE(pbl.subscribers.size() == 5);
-            //pbl.add_subscriber(sb, &subscriber_d2::test2);  // &subscriber_d2::test2 - обращение к ф-ии что нет в subscriber_base
+            //pbl.subscribe(sb, &subscriber_d2::test2);  // &subscriber_d2::test2 - обращение к ф-ии что нет в subscriber_base
       }
 
 
@@ -222,8 +222,8 @@ namespace roro_lib
 
             subscriber_state sscr;
 
-            pbl.add_subscriber(sscr);
-            pbl.add_subscriber(sscr, &subscriber_state::test);
+            pbl.subscribe(sscr);
+            pbl.subscribe(sscr, &subscriber_state::test);
             pbl.run();
 
             ASSERT_TRUE(sscr.st == 3);
@@ -235,11 +235,11 @@ namespace roro_lib
 
             subscriber_state sscr;
 
-            pbl.add_subscriber(std::move(sscr));
-            pbl.add_subscriber(std::move(sscr), &subscriber_state::test);
+            pbl.subscribe(std::move(sscr));
+            pbl.subscribe(std::move(sscr), &subscriber_state::test);
 
-            pbl.add_subscriber(subscriber_state());
-            pbl.add_subscriber(subscriber_state(), &subscriber_state::test);
+            pbl.subscribe(subscriber_state());
+            pbl.subscribe(subscriber_state(), &subscriber_state::test);
 
             pbl.run();
 
@@ -252,12 +252,12 @@ namespace roro_lib
             subscriber_functor sf;
 
             publisher pbl1;
-            pbl1.add_subscriber(subscriber_fn);
-            pbl1.add_subscriber(subscriber_functor());
-            pbl1.add_subscriber(sf);
-            pbl1.add_subscriber(sf, &subscriber_functor::test);
-            pbl1.add_subscriber(fn1);
-            pbl1.add_subscriber(std::function<void(void)>(subscriber_fn));
+            pbl1.subscribe(subscriber_fn);
+            pbl1.subscribe(subscriber_functor());
+            pbl1.subscribe(sf);
+            pbl1.subscribe(sf, &subscriber_functor::test);
+            pbl1.subscribe(fn1);
+            pbl1.subscribe(std::function<void(void)>(subscriber_fn));
 
             ASSERT_TRUE(pbl1.subscribers.size() == 6);
 
@@ -275,12 +275,12 @@ namespace roro_lib
             subscriber_functor sf;
 
             publisher pbl1;
-            pbl1.add_subscriber(subscriber_fn);
-            pbl1.add_subscriber(subscriber_functor());
-            pbl1.add_subscriber(sf);
-            pbl1.add_subscriber(sf, &subscriber_functor::test);
-            pbl1.add_subscriber(fn1);
-            pbl1.add_subscriber(std::function<void(void)>(subscriber_fn));
+            pbl1.subscribe(subscriber_fn);
+            pbl1.subscribe(subscriber_functor());
+            pbl1.subscribe(sf);
+            pbl1.subscribe(sf, &subscriber_functor::test);
+            pbl1.subscribe(fn1);
+            pbl1.subscribe(std::function<void(void)>(subscriber_fn));
 
             ASSERT_TRUE(pbl1.subscribers.size() == 6);
 
@@ -304,9 +304,9 @@ namespace roro_lib
             publisher pbl;
             subscriber_exeption sbscrex;
 
-            pbl.add_subscriber(sbscrex, &subscriber_exeption::test1);
-            pbl.add_subscriber(sbscrex, &subscriber_exeption::test2);
-            pbl.add_subscriber(sbscrex, &subscriber_exeption::test3);
+            pbl.subscribe(sbscrex, &subscriber_exeption::test1);
+            pbl.subscribe(sbscrex, &subscriber_exeption::test2);
+            pbl.subscribe(sbscrex, &subscriber_exeption::test3);
             ASSERT_TRUE(pbl.subscribers.size() == 3);
 
             ASSERT_TRUE(pbl.get_last_notify_exception().size() == 0);
@@ -330,21 +330,21 @@ namespace roro_lib
       TEST_F(PublisherMixinTest, DelSubscribers)
       {
             publisher pbl;
-            publisher::subscriber_handle handle1 = pbl.add_subscriber(subscriber_taged(1), &subscriber_taged::test1);
-            publisher::subscriber_handle handle2 = pbl.add_subscriber(subscriber_taged(2), &subscriber_taged::test2);
-            publisher::subscriber_handle handle3 = pbl.add_subscriber(subscriber_taged(3), &subscriber_taged::test3);
-            publisher::subscriber_handle handle4 = pbl.add_subscriber(subscriber_taged(4), &subscriber_taged::test1);
-            publisher::subscriber_handle handle5 = pbl.add_subscriber(subscriber_taged(5), &subscriber_taged::test2);
-            publisher::subscriber_handle handle6 = pbl.add_subscriber(subscriber_taged(6), &subscriber_taged::test3);
+            publisher::subscriber_handle handle1 = pbl.subscribe(subscriber_taged(1), &subscriber_taged::test1);
+            publisher::subscriber_handle handle2 = pbl.subscribe(subscriber_taged(2), &subscriber_taged::test2);
+            publisher::subscriber_handle handle3 = pbl.subscribe(subscriber_taged(3), &subscriber_taged::test3);
+            publisher::subscriber_handle handle4 = pbl.subscribe(subscriber_taged(4), &subscriber_taged::test1);
+            publisher::subscriber_handle handle5 = pbl.subscribe(subscriber_taged(5), &subscriber_taged::test2);
+            publisher::subscriber_handle handle6 = pbl.subscribe(subscriber_taged(6), &subscriber_taged::test3);
             ASSERT_TRUE(pbl.subscribers.size() == 6);
 
-            pbl.del_subscriber(handle3);
-            pbl.del_subscriber(handle4);
+            pbl.unsubscribe(handle3);
+            pbl.unsubscribe(handle4);
 
             ASSERT_TRUE(pbl.subscribers.size() == 4);
 
-            pbl.del_subscriber(handle3);
-            pbl.del_subscriber(handle4);
+            pbl.unsubscribe(handle3);
+            pbl.unsubscribe(handle4);
 
             ASSERT_TRUE(pbl.subscribers.size() == 4);
 
@@ -396,14 +396,14 @@ namespace roro_lib
       TEST_F(PublisherMixinTest, NotifiRetValues)
       {
             publisher_not_void pbl;
-            pbl.add_subscriber(fn1);
-            pbl.add_subscriber(fn2);
-            pbl.add_subscriber(fn3);
+            pbl.subscribe(fn1);
+            pbl.subscribe(fn2);
+            pbl.subscribe(fn3);
             ASSERT_TRUE(pbl.subscribers.size() == 3);
 
-            pbl.add_subscriber(fn1);
-            pbl.add_subscriber(fn2);
-            pbl.add_subscriber(fn3);
+            pbl.subscribe(fn1);
+            pbl.subscribe(fn2);
+            pbl.subscribe(fn3);
             ASSERT_TRUE(pbl.subscribers.size() == 3);
 
             int sum = pbl.run();
