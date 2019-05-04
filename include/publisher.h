@@ -258,7 +258,7 @@ namespace roro_lib
                   }
             }
 
-            void del_all_subscribers()
+            void unsubscribe_all()
             {
                   subscribers.clear();
             }

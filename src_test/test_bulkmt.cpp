@@ -348,7 +348,7 @@ namespace roro_lib
 
             ASSERT_TRUE(pbl.subscribers.size() == 4);
 
-            pbl.del_all_subscribers();
+            pbl.unsubscribe_all();
             ASSERT_TRUE(pbl.subscribers.size() == 0);
       }
 
