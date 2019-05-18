@@ -26,7 +26,7 @@ SET(TARGT_NAME test_bulkmt)
 add_executable(${TARGT_NAME}  test_bulkmt.cpp)
 target_include_directories(${TARGT_NAME}  PUBLIC "../include/" "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/.." ${GTEST_INCLUDE_DIR})
 SET(ALL_LIBS GTest::GTest GTest::Main my_lib)
-SET(Linux_LIBS pthread)
+SET(Linux_LIBS pthread stdc++fs)
 
 if (MSVC)
 
