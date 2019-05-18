@@ -31,10 +31,10 @@ SET(Linux_LIBS pthread stdc++fs)
 if (MSVC)
 
         set_target_properties(${TARGT_NAME}  PROPERTIES
-      CXX_STANDARD 17
-      CXX_STANDARD_REQUIRED ON
-      COMPILE_OPTIONS "/permissive-;/Zc:wchar_t"
-    )
+          CXX_STANDARD 17
+          CXX_STANDARD_REQUIRED ON
+          COMPILE_OPTIONS "/permissive-;/Zc:wchar_t"
+        )
 
 else()
 
