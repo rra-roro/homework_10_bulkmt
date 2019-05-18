@@ -24,7 +24,7 @@ void help()
        Options:  
        -version      -get version of program
        -?            -about program (this info)
-       -N <size>     - [required] count of command in the block. Should be > 1
+       -N <size>     - [required] count of command in the block. Should be > 0
        -T <count>    - [optional] count of file thread. Should be > 0. Default 2
                                 
 )" << endl;
