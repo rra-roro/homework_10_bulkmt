@@ -431,7 +431,7 @@ namespace roro_lib
 
             size_t index_calls = 0;
 
-            cmdr.subscribe([&](const std::vector<std::string>& command_list, std::time_t t) {
+            cmdr.subscribe([&](const std::vector<std::string>& command_list, [[maybe_unused]] std::time_t t) {
                   switch (index_calls)
                   {
                   case 0:
