@@ -12,56 +12,75 @@ namespace roro_lib
 {
       class command_reader : public publisher_mixin<void(const std::vector<std::string>&, std::time_t)>
       {
+            struct cmd_reader_internal_status
+            {
+                  std::vector<std::string> command_list;
+                  size_t count_cmd_bulk = 0;
+                  std::time_t time_first_cmd = 0;
+                  long long count_bracket = 0;
+            };
+
+            cmd_reader_internal_status cmd_ris;
+            counters_command_reader reader_counters;
+            size_t size_bulk;
+
         public:
             command_reader(size_t size_bulk) : size_bulk(size_bulk){};
 
-            void read()
+            void read(std::istream& in = std::cin)
             {
                   try
                   {
-                        size_t count_cmd_bulk = 0;
-                        std::time_t time_first_cmd = 0;
-                        std::vector<std::string> command_list;
-
-                        for (std::string line; getline(std::cin, line);) // For exit by EOF. (Console Linux Ctrl+D. Console Windows Ctrl+Z)
+                        for (std::string line; getline(in, line);) // For exit by EOF. (Console Linux Ctrl+D. Console Windows Ctrl+Z)
                         {
                               reader_counters.count_string++;
 
-                              if (count_cmd_bulk == 0)
-                                    time_first_cmd = get_time();
+                              if (cmd_ris.count_cmd_bulk == 0)
+                                    cmd_ris.time_first_cmd = get_time();
 
                               if (line == "{")
                               {
-                                    notify_subscribers(command_list, time_first_cmd);
-                                    brackets_read(reader_counters.count_all_cmds);
-                                    count_cmd_bulk = 0;
+                                    if (cmd_ris.count_bracket == 0)
+                                    {
+                                          notify_subscribers(cmd_ris.command_list, cmd_ris.time_first_cmd);
+                                          cmd_ris.count_cmd_bulk = 0;
+                                    }
+                                    cmd_ris.count_bracket++;
                                     continue;
                               }
 
                               if (line == "}")
                               {
-                                    throw std::runtime_error("found not a pair bracket");
-                              }
+                                    cmd_ris.count_bracket--;
+                                    if (cmd_ris.count_bracket < 0)
+                                          throw std::runtime_error("found not a pair bracket");
 
-                              command_list.push_back(line);
-                              reader_counters.count_all_cmds++;
-
-                              if (count_cmd_bulk == size_bulk - 1)
-                              {
-                                    notify_subscribers(command_list, time_first_cmd);
-                                    count_cmd_bulk = 0;
+                                    if (cmd_ris.count_bracket == 0)
+                                    {
+                                          notify_subscribers(cmd_ris.command_list, cmd_ris.time_first_cmd);
+                                          cmd_ris.count_cmd_bulk = 0;
+                                    }
                                     continue;
                               }
-                              count_cmd_bulk++;
+
+                              cmd_ris.command_list.push_back(line);
+                              reader_counters.count_all_cmds++;
+
+                              if (cmd_ris.count_cmd_bulk == size_bulk - 1 && cmd_ris.count_bracket == 0)
+                              {
+                                    notify_subscribers(cmd_ris.command_list, cmd_ris.time_first_cmd);
+                                    cmd_ris.count_cmd_bulk = 0;
+                                    continue;
+                              }
+                              cmd_ris.count_cmd_bulk++;
                         }
 
-                        notify_subscribers(command_list, time_first_cmd);
+                        flush();
                   }
                   catch (...)
                   {
                         std::throw_with_nested(std::runtime_error("command_reader::read() failed."));
                   }
-
             };
 
             counters_command_reader get_counters() const noexcept
@@ -69,11 +88,21 @@ namespace roro_lib
                   return reader_counters;
             }
 
+            void flush()
+            {
+                  if (cmd_ris.count_bracket == 0)
+                  {
+                        notify_subscribers(cmd_ris.command_list, cmd_ris.time_first_cmd);
+                  }
+                  else
+                  {
+                        cmd_ris.count_bracket = 0;
+                        cmd_ris.command_list.clear();
+                  }
+                  cmd_ris.count_cmd_bulk = 0;
+            }
+
         private:
-            counters_command_reader reader_counters;
-
-            size_t size_bulk;
-
             std::time_t get_time() const noexcept
             {
                   return std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -97,42 +126,5 @@ namespace roro_lib
                         std::throw_with_nested(std::runtime_error("command_reader::notify_subscribers() failed."));
                   }
             }
-
-            void brackets_read(std::size_t& count_all_cmds)
-            {
-                  size_t count_bracket = 1;
-                  std::time_t time_first_cmd = 0;
-                  std::vector<std::string> command_list;
-
-                  for (std::string line; count_bracket != 0;)
-                  {
-                        reader_counters.count_string++;
-
-                        if (!getline(std::cin, line))
-                              exit(EXIT_SUCCESS); // Program exit  by EOF. (Console Linux Ctrl+D. Console Windows Ctrl+Z)
-
-                        if (time_first_cmd == 0)
-                              time_first_cmd = get_time();
-
-
-                        if (line == "{")
-                        {
-                              ++count_bracket;
-                              continue;
-                        }
-
-                        if (line == "}")
-                        {
-                              --count_bracket;
-                              continue;
-                        }
-
-                        command_list.push_back(line);
-                        count_all_cmds++;
-                  }
-
-                  notify_subscribers(command_list, time_first_cmd);
-            }
       };
-
 }
