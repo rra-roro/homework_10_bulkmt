@@ -1,0 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=9"/>
+<meta name="generator" content="Doxygen 1.8.6"/>
+<title>bulkmt: Титульная страница</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr style="height: 56px;">
+  <td style="padding-left: 0.5em;">
+   <div id="projectname">bulkmt
+   </div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- Создано системой Doxygen 1.8.6 -->
+  <div id="navrow1" class="tabs">
+    <ul class="tablist">
+      <li class="current"><a href="index.html"><span>Титульная&#160;страница</span></a></li>
+      <li><a href="namespaces.html"><span>Пространства&#160;имен</span></a></li>
+      <li><a href="annotated.html"><span>Классы</span></a></li>
+      <li><a href="files.html"><span>Файлы</span></a></li>
+    </ul>
+  </div>
+</div><!-- top -->
+<div class="header">
+  <div class="headertitle">
+<div class="title">bulkmt Документация</div>  </div>
+</div><!--header-->
+<div class="contents">
+<div class="textblock"><h2>Использование bulkmt</h2>
+<p>bulkmt имеет две опции:</p>
+<p><code>-N &lt;size&gt;</code> - <b>обязательный параметр</b>, задающий число команд в блоке.<br/>
+ <code>-T &lt;count&gt;</code> - <em>опциональный параметр</em>, задающий число потоков записи в файлы. По умолчанию создается 2 потока.</p>
+<p>Параметры можно комбинировать:</p>
+<p><b>bulkmt -N 3 -T 100</b></p>
+<p>запускает bulkmt cо 100 потоками, по 3 команды в блоке</p>
+<h2>Описание особенностей моей реализации:</h2>
+<p>1) Для чтения команд из стандартного ввода используется тот же код, что и в 7 задании.</p>
+<p>2) Потоки для вывода на консоль и в файл создаются через класс <b>thread_mgr</b>, который принимает ф-ию потока, очередь сообщений и количество создаваемых потоков.</p>
+<p><b>thread_mgr</b> создает нужное количество потоков, передает потокам очередь сообщений, получает из потоков возникшие в них исключения, и управляет счетчиками.</p>
+<p>Так же класс <b>thread_mgr</b> позволяет своим пользователям завершить потоки, созданные экземпляром этого класса</p>
+<p>3) Потоки получают сообщения через очередь сообщений, реализованных в классе <b>queue_tread_t</b>. Команду на завершение потоки так же получают через эту очередь. Очередь использует condition_variable для синхронизации доступа к ф-иям очереди. Таким образом запись и чтение в очередь организовано с ожиданием, что позволяет потокам не использовать дополнительные примитивы синхронизации, а потоко безопасно вызывать ф-ии очереди.</p>
+<p>4) Очередь подписывается на события готовности очередного блока команд. Но не напрямую, а через лямбду, в которой вставлен дополнительный блок try/catch, что добавляет дополнительную диагностическую информацию о том, чья это очередь файлового или консольного потока, в случае возникновения исключения при добавлении команды в очередь.</p>
+<p>Таким образом в программе используются две независимые очереди, одна для потока выводящего информацию на консоль, и одна для потоков записи в файл.</p>
+<p>5) В программе реализована обработка исключений в стиле С++11. Исключения так же перехватываются в создаваемых потоках. После завершения всех потоков, возникшие ранее в потоках исключения, вновь возбуждаются в главном потоке main, где и происходит их обработка. </p>
+</div></div><!-- contents -->
+<!-- start footer part -->
+<hr class="footer"/><address class="footer"><small>
+Создано системой &#160;<a href="http://www.doxygen.org/index.html">
+<img class="footer" src="doxygen.png" alt="doxygen"/>
+</a> 1.8.6
+</small></address>
+</body>
+</html>
